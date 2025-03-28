@@ -230,6 +230,7 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  *
  * @param {*} masterState
  * @param {object} opts
+ * @param (string} opts.host
  * @param {string} opts.port
  * @param {boolean} opts.watchReaper
  * @param {boolean} opts.disableScheduler
@@ -237,12 +238,13 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  * @returns {function}
  */
 const onMessageFromWorker =
-  (masterState, { port, watchReaper, disableScheduler, pid }) =>
+  (masterState, { host, port, watchReaper, disableScheduler, pid }) =>
   (msg) => {
     //console.log("worker msg", typeof msg, msg);
     if (msg === "Start" && !masterState.started) {
       masterState.started = true;
       runScheduler({
+        host,
         port,
         watchReaper,
         disableScheduler,
@@ -271,6 +273,7 @@ module.exports =
    * @function
    * @name "module.exports function"
    * @param {object} [opts = {}]
+   * @param {string} [opts.host = "0.0.0.0"]
    * @param {number} [opts.port = 3000]
    * @param {boolean} opts.watchReaper
    * @param {boolean} opts.disableScheduler
@@ -280,6 +283,7 @@ module.exports =
    * @returns {Promise<void>}
    */
   async ({
+    host,
     port = 3000,
     watchReaper,
     disableScheduler,
@@ -317,6 +321,7 @@ module.exports =
       worker.on(
         "message",
         onMessageFromWorker(masterState, {
+          host,
           port,
           watchReaper,
           disableScheduler,
@@ -391,8 +396,9 @@ module.exports =
           addWorker(cluster.fork());
         });
       } else {
-        await nonGreenlockWorkerSetup(appargs, port);
+        await nonGreenlockWorkerSetup(appargs, host, port);
         runScheduler({
+          host,
           port,
           watchReaper,
           disableScheduler,
@@ -404,16 +410,17 @@ module.exports =
       }
       Trigger.emitEvent("Startup");
     } else {
-      await nonGreenlockWorkerSetup(appargs, port);
+      await nonGreenlockWorkerSetup(appargs, host, port);
     }
   };
 
 /**
  * @param {*} appargs
+ * @param {*} host
  * @param {*} port
  * @returns {Promise<void>}
  */
-const nonGreenlockWorkerSetup = async (appargs, port) => {
+const nonGreenlockWorkerSetup = async (appargs, host, port) => {
   process.send && process.on("message", workerDispatchMsg);
 
   const app = await getApp(appargs);
@@ -441,13 +448,13 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
       httpServer,
       httpsServer
     );
-    httpServer.listen(port, () => {
-      console.log("HTTP Server running on port 80");
+    httpServer.listen(port, host, () => {
+      console.log(`HTTP Server running on ${host}:${port}`);
     });
 
     // todo port to config
-    httpsServer.listen(443, () => {
-      console.log("HTTPS Server running on port 443");
+    httpsServer.listen(443, host, () => {
+      console.log(`HTTPS Server running on ${host}:443`);
     });
   } else {
     // server with http only
@@ -459,8 +466,8 @@ const nonGreenlockWorkerSetup = async (appargs, port) => {
     // todo refer in doc to httpserver doc
     // todo there can be added other parameters for httpserver
     httpServer.setTimeout(timeout * 1000);
-    httpServer.listen(port, () => {
-      console.log(`Saltcorn listening on http://localhost:${port}/`);
+    httpServer.listen(port, host, () => {
+      console.log(`Saltcorn HTTP Server listening on ${host}:${port}`);
     });
   }
   getState().processSend("Start");
