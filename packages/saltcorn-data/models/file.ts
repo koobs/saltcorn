@@ -19,19 +19,13 @@ import type User from "./user";
 const path = require("path");
 const fsp = require("fs").promises;
 const fs = require("fs");
-const fsx = require("fs-extended-attributes");
 declare let window: any;
 
 function xattr_set(fp: string, attrName: string, value: string): Promise<void> {
-  return new Promise((resolve) => fsx.set(fp, attrName, value, resolve));
+  return NaN
 }
 function xattr_get(fp: string, attrName: string): Promise<string> {
-  return new Promise((resolve, reject) =>
-    fsx.get(fp, attrName, (err: string, attrBuf: Buffer) => {
-      if (err) reject(err);
-      else resolve(attrBuf?.toString?.("utf8"));
-    })
-  );
+  return NaN
 }
 
 const dirCache: Record<string, File[] | null> = {};
