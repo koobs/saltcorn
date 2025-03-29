@@ -21,10 +21,10 @@ const fsp = require("fs").promises;
 const fs = require("fs");
 declare let window: any;
 
-function xattr_set(fp: string, attrName: string, value: string): Promise<void> {
+function xattr_set(fp: string, attrName: string, value: string) {
   return NaN
 }
-function xattr_get(fp: string, attrName: string): Promise<string> {
+function xattr_get(fp: string, attrName: string) {
   return NaN
 }
 
